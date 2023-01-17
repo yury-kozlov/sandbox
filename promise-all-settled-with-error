@@ -1,0 +1,22 @@
+/*
+  This test shows the difference between calling Promise.allSettled with an async function that throws an error
+  (in this case error is not propagated to the caller)
+  and calling Promise.allSettled with a regular (sync) function that also throws an error but without a promise
+  (in this case error propagates upper and may crash the application when not handled properly).
+*/
+
+function getDataSync(id) {
+  if (id == 2) {
+    throw new Error('oops');
+  }
+  return "id: " + id;
+}
+
+(async function () {
+  var loader = async (id) => getDataSync(id); // this call will NOT throw error because it's awaitable
+  // loader = getDataSync;  // this line will cause unhandled error because the called function doesn't return awaitable promise
+  const promises = await Promise.allSettled([1, 2, 3].map(loader));
+  
+  const data = promises.map(promise => promise.value || promise.reason.message);
+  console.log(data);
+})()
